@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+var (
+	PropertiesNameJson  = "json"
+	PropertiesNameQuery = "query"
+
+	RequiredName = "required"
+)
+
 func parse(sg *Swgin) swaggerObject {
 	s := swaggerObject{
 		Swagger:           "2.0",
@@ -216,19 +223,31 @@ func toDefinition(d swaggerDefinitionsObject, t any) {
 		}
 
 		kv := keyVal{Value: schemaOfField(member, d)}
-		kv.Key = member.Name
+		kv.Key = parsePropertiesName(member)
 		if schema.Properties == nil {
 			schema.Properties = &swaggerSchemaObjectProperties{}
 		}
 		*schema.Properties = append(*schema.Properties, kv)
 
 		structTag := member.Tag
-		if structTag.Get("required") == "true" && !contains(schema.Required, member.Name) {
+		if structTag.Get(RequiredName) == "true" && !contains(schema.Required, member.Name) {
 			schema.Required = append(schema.Required, member.Name)
 		}
 	}
 
 	d[name] = schema
+}
+
+func parsePropertiesName(member reflect.StructField) string {
+	tag := member.Tag
+	if len(tag.Get(PropertiesNameJson)) > 0 {
+		return tag.Get(PropertiesNameJson)
+	}
+	if len(tag.Get(PropertiesNameQuery)) > 0 {
+		return tag.Get(PropertiesNameQuery)
+	}
+
+	return member.Name
 }
 
 func schemaOfField(member reflect.StructField, d swaggerDefinitionsObject) swaggerSchemaObject {
