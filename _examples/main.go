@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/fzdwx/swgin"
 	"github.com/gin-gonic/gin"
 	"os"
-	"swgin"
 )
 
 type Req struct {
