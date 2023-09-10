@@ -60,7 +60,6 @@ func renderRouter(paths swaggerPathsObject, definitions swaggerDefinitionsObject
 	for i := range pathPairs {
 		parameters = parsePathParameters(pathPairs[i], path, parameters, router)
 	}
-
 	if router.Query != nil {
 		parameters = append(parameters, parseQueryOrBody(router.Query, "query"))
 	}
@@ -73,21 +72,7 @@ func renderRouter(paths swaggerPathsObject, definitions swaggerDefinitionsObject
 		pathItemObject = swaggerPathItemObject{}
 	}
 
-	desc := "A successful response."
-	respSchema := schemaCore{}
-	respTypeName := typeName(router.ResponseType)
-	if router.ResponseType != nil && len(respTypeName) > 0 {
-		if strings.HasPrefix(respTypeName, "[]") {
-
-			refTypeName := strings.Replace(respTypeName, "[", "", 1)
-			refTypeName = strings.Replace(refTypeName, "]", "", 1)
-
-			respSchema.Type = "array"
-			respSchema.Items = &swaggerItemsObject{Ref: fmt.Sprintf("#/definitions/%s", refTypeName)}
-		} else {
-			respSchema.Ref = fmt.Sprintf("#/definitions/%s", respTypeName)
-		}
-	}
+	desc, respSchema := parseRespType(router)
 	operationObject := &swaggerOperationObject{
 		Tags:       router.Tags,
 		Parameters: parameters,
@@ -121,6 +106,25 @@ func renderRouter(paths swaggerPathsObject, definitions swaggerDefinitionsObject
 		pathItemObject.Patch = operationObject
 	}
 	paths[path] = pathItemObject
+}
+
+func parseRespType(router Router) (string, schemaCore) {
+	desc := "A successful response."
+	respSchema := schemaCore{}
+	respTypeName := typeName(router.ResponseType)
+	if router.ResponseType != nil && len(respTypeName) > 0 {
+		if strings.HasPrefix(respTypeName, "[]") {
+
+			refTypeName := strings.Replace(respTypeName, "[", "", 1)
+			refTypeName = strings.Replace(refTypeName, "]", "", 1)
+
+			respSchema.Type = "array"
+			respSchema.Items = &swaggerItemsObject{Ref: fmt.Sprintf("#/definitions/%s", refTypeName)}
+		} else {
+			respSchema.Ref = fmt.Sprintf("#/definitions/%s", respTypeName)
+		}
+	}
+	return desc, respSchema
 }
 
 func parseQueryOrBody(a any, name string) swaggerParameterObject {
